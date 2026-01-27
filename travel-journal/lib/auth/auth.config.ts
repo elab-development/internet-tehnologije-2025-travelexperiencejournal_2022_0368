@@ -1,9 +1,9 @@
-import { NextAuthConfig } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { UserRole } from "@/lib/types";
 
-export const authConfig: NextAuthConfig = {
+export const authConfig: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -13,23 +13,21 @@ export const authConfig: NextAuthConfig = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email i lozinka su obavezni");
+          return null;
         }
 
         try {
-          // Proveri korisnika u Firebase Auth
           const userRecord = await adminAuth.getUserByEmail(
             credentials.email as string
           );
 
-          // Uzmi dodatne podatke iz Firestore
           const userDoc = await adminDb
             .collection("users")
             .doc(userRecord.uid)
             .get();
 
           if (!userDoc.exists) {
-            throw new Error("Korisnik ne postoji u bazi");
+            return null;
           }
 
           const userData = userDoc.data();
@@ -37,24 +35,22 @@ export const authConfig: NextAuthConfig = {
           return {
             id: userRecord.uid,
             email: userRecord.email!,
-            name: userData?.displayName || userRecord.displayName,
+            name: userData?.displayName || userRecord.displayName || '',
             role: userData?.role || UserRole.USER,
           };
         } catch (error: any) {
           console.error("Auth error:", error);
-          throw new Error("Neispravni kredencijali");
+          return null;
         }
       },
     }),
   ],
   pages: {
     signIn: "/login",
-    signOut: "/login",
     error: "/login",
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Dodaj role u JWT token
       if (user) {
         token.role = user.role;
         token.id = user.id;
@@ -62,7 +58,6 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      // Dodaj role u session objekat
       if (session.user) {
         session.user.role = token.role as UserRole;
         session.user.id = token.id as string;
@@ -72,7 +67,7 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 dana
+    maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

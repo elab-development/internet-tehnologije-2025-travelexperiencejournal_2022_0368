@@ -17,7 +17,7 @@ export default function HomePage() {
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/register">
-                <Button variant="primary" size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                <Button variant="primary" size="lg" className="hover:bg-blue-400">
                   Započni besplatno
                 </Button>
               </Link>

@@ -9,53 +9,73 @@ import Button from '@/components/ui/Button';
 import { PenSquare } from 'lucide-react';
 
 async function getPosts(): Promise<Post[]> {
-  const snapshot = await adminDb
-    .collection('posts')
-    .where('isPublished', '==', true)
-    .orderBy('createdAt', 'desc')
-    .limit(10)
-    .get();
+  try {
+    const snapshot = await adminDb
+      .collection('posts')
+      .orderBy('createdAt', 'desc')
+      .limit(10)
+      .get();
 
-  const posts: Post[] = [];
-  snapshot.forEach((doc) => {
-    posts.push({
-      postId: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate(),
-      travelDate: doc.data().travelDate?.toDate(),
-    } as Post);
-  });
+    const posts: Post[] = [];
+    const authorsMap = new Map();
+    const destinationsMap = new Map();
 
-  return posts;
-}
+    // Prvo skupi sve IDs
+    const authorIds = new Set<string>();
+    const destinationIds = new Set<string>();
 
-async function getAuthors(authorIds: string[]): Promise<Record<string, User>> {
-  const authors: Record<string, User> = {};
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.isPublished) {
+        authorIds.add(data.authorId);
+        destinationIds.add(data.destinationId);
+        posts.push({
+          postId: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate(),
+          travelDate: data.travelDate?.toDate(),
+        } as Post);
+      }
+    });
 
-  for (const authorId of authorIds) {
-    const doc = await adminDb.collection('users').doc(authorId).get();
-    if (doc.exists) {
-      authors[authorId] = doc.data() as User;
+    // Batch fetch authors (max 10 po query)
+    const authorIdArray = Array.from(authorIds);
+    for (let i = 0; i < authorIdArray.length; i += 10) {
+      const batch = authorIdArray.slice(i, i + 10);
+      const authorsSnap = await adminDb
+        .collection('users')
+        .where('uid', 'in', batch)
+        .get();
+      
+      authorsSnap.forEach(doc => {
+        authorsMap.set(doc.id, doc.data());
+      });
     }
-  }
 
-  return authors;
-}
-
-async function getDestinations(
-  destinationIds: string[]
-): Promise<Record<string, Destination>> {
-  const destinations: Record<string, Destination> = {};
-
-  for (const destId of destinationIds) {
-    const doc = await adminDb.collection('destinations').doc(destId).get();
-    if (doc.exists) {
-      destinations[destId] = doc.data() as Destination;
+    // Batch fetch destinations
+    const destIdArray = Array.from(destinationIds);
+    for (let i = 0; i < destIdArray.length; i += 10) {
+      const batch = destIdArray.slice(i, i + 10);
+      const destsSnap = await adminDb
+        .collection('destinations')
+        .where('destinationId', 'in', batch)
+        .get();
+      
+      destsSnap.forEach(doc => {
+        destinationsMap.set(doc.id, doc.data());
+      });
     }
-  }
 
-  return destinations;
+    return posts.map(post => ({
+      ...post,
+      author: authorsMap.get(post.authorId),
+      destination: destinationsMap.get(post.destinationId),
+    }));
+  } catch (error) {
+    console.error('Dashboard error:', error);
+    return []; // Vraća prazno umesto kraha
+  }
 }
 
 export default async function DashboardPage() {
@@ -66,52 +86,30 @@ export default async function DashboardPage() {
   }
 
   const posts = await getPosts();
-  const authorIds = [...new Set(posts.map((p) => p.authorId))];
-  const destinationIds = [...new Set(posts.map((p) => p.destinationId))];
-
-  const authors = await getAuthors(authorIds);
-  const destinations = await getDestinations(destinationIds);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Dobrodošao, {session.user?.name}!
           </h1>
           <p className="text-gray-600 mt-2">
-            Istraži najnovije putopise iz cele zajednice
+            Istraži najnovije putopise
           </p>
         </div>
-        <Link href="/posts/create">
-          <Button variant="primary" size="lg">
-            <PenSquare className="w-5 h-5" />
-            Novi putopis
-          </Button>
-        </Link>
       </div>
 
-      {/* Posts Grid */}
       {posts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">
-            Još nema objavljenih putopisa.
-          </p>
-          <Link href="/posts/create">
-            <Button variant="primary" size="lg" className="mt-4">
-              Kreiraj prvi putopis
-            </Button>
-          </Link>
-        </div>
+        <p className="text-center text-gray-500">Nema putopisa</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+          {posts.map((post: any) => (
             <PostCard
               key={post.postId}
               post={post}
-              author={authors[post.authorId]}
-              destination={destinations[post.destinationId]}
+              author={post.author}
+              destination={post.destination}
             />
           ))}
         </div>
