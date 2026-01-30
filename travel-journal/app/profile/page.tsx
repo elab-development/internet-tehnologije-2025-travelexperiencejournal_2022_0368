@@ -19,24 +19,31 @@ async function getUserData(userId: string): Promise<User | null> {
 }
 
 async function getUserPosts(userId: string): Promise<Post[]> {
-  const snapshot = await adminDb
-    .collection('posts')
-    .where('authorId', '==', userId)
-    .orderBy('createdAt', 'desc')
-    .get();
+  try {
+    const snapshot = await adminDb
+      .collection('posts')
+      .where('authorId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(20) // ← DODAJ LIMIT!
+      .get();
 
-  const posts: Post[] = [];
-  snapshot.forEach((doc) => {
-    posts.push({
-      postId: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate(),
-      travelDate: doc.data().travelDate?.toDate(),
-    } as Post);
-  });
+    const posts: Post[] = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      posts.push({
+        postId: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate(),
+        updatedAt: data.updatedAt?.toDate(),
+        travelDate: data.travelDate?.toDate(),
+      } as Post);
+    });
 
-  return posts;
+    return posts;
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    return [];
+  }
 }
 
 export default async function ProfilePage() {
