@@ -49,6 +49,14 @@ export default function Navbar() {
               </Link>
 
               <Link
+                href="/posts/create"  // ✅ Promena sa placeholder-a
+                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+                >
+                <PenSquare className="w-5 h-5" />
+                <span className="hidden sm:inline">Novi putopis</span>
+              </Link>
+
+              <Link
                 href="/posts/create"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
               >
