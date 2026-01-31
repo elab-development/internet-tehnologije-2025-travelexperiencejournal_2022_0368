@@ -41,6 +41,13 @@ export default function PostActions({
         <span className="hidden sm:inline">Obriši</span>
       </Button>
 
+      <Link href={`/posts/${postId}/edit`}>  {/* ✅ Već postoji */}
+  <Button variant="secondary" size="sm">
+    <Edit className="w-4 h-4" />
+    <span className="hidden sm:inline">Uredi</span>
+  </Button>
+</Link>
+
       {/* Delete modal */}
       {showDeleteModal && (
         <DeleteModal
@@ -53,5 +60,7 @@ export default function PostActions({
         />
       )}
     </div>
+
+    
   );
 }
