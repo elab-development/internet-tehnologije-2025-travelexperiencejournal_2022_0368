@@ -40,48 +40,49 @@ export default function Navbar() {
           {/* Navigation Links */}
           {session ? (
             <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-              >
-                <Home className="w-5 h-5" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
+    <Link
+      href="/dashboard"
+      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+    >
+      <Home className="w-5 h-5" />
+      <span className="hidden sm:inline">Dashboard</span>
+    </Link>
 
-              <Link
-                href="/posts/create"  // ✅ Promena sa placeholder-a
-                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-                >
-                <PenSquare className="w-5 h-5" />
-                <span className="hidden sm:inline">Novi putopis</span>
-              </Link>
+    <Link
+      href="/posts/create"
+      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+    >
+      <PenSquare className="w-5 h-5" />
+      <span className="hidden sm:inline">Novi putopis</span>
+    </Link>
 
-              <Link
-                href="/posts/create"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-              >
-                <PenSquare className="w-5 h-5" />
-                <span className="hidden sm:inline">Novi putopis</span>
-              </Link>
+    {/* ✅ DODAJ OVO */}
+    <Link
+      href="/destinations/create"
+      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+    >
+      <MapPin className="w-5 h-5" />
+      <span className="hidden sm:inline">Nova destinacija</span>
+    </Link>
 
-              <Link
-                href="/profile"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
-              >
-                <User className="w-5 h-5" />
-                <span className="hidden sm:inline">{session.user?.name}</span>
-              </Link>
+    <Link
+      href="/profile"
+      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+    >
+      <User className="w-5 h-5" />
+      <span className="hidden sm:inline">{session.user?.name}</span>
+    </Link>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Odjavi se</span>
-              </Button>
-            </div>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleLogout}
+      className="flex items-center gap-2"
+    >
+      <LogOut className="w-4 h-4" />
+      <span className="hidden sm:inline">Odjavi se</span>
+    </Button>
+  </div>
           ) : (
             <div className="flex gap-2">
               <Link href="/login">

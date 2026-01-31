@@ -7,7 +7,8 @@ const protectedRoutes = [
   '/dashboard',
   '/profile',
   '/posts/create',
-  '/posts/edit',  // ← Dodaj ovo
+  '/posts/edit',
+  '/destinations/create'
 ];
 const adminRoutes = ['/admin'];
 const editorRoutes = ['/posts/edit', '/destinations/manage'];  // ✅ već postoji
