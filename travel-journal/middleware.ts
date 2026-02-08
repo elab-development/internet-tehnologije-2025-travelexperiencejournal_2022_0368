@@ -11,7 +11,7 @@ const protectedRoutes = [
   '/destinations/create'
 ];
 const adminRoutes = ['/admin'];
-const editorRoutes = ['/posts/edit', '/destinations/manage'];  // ✅ već postoji
+const editorRoutes = ['/posts/edit', '/destinations/manage'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
