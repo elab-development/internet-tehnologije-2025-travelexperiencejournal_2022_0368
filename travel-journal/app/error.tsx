@@ -11,7 +11,8 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Dashboard error:', error);
+    // ✅ Loguj samo message (string), NE ceo Error objekat
+    console.error('Dashboard error:', error.message);
   }, [error]);
 
   return (
@@ -21,6 +22,7 @@ export default function Error({
           Nešto nije u redu
         </h2>
         <p className="text-gray-600 mb-8">
+          {/* ✅ Prikaži samo message (string) */}
           {error.message || 'Došlo je do greške pri učitavanju podataka.'}
         </p>
         <Button onClick={reset} variant="primary" size="lg">

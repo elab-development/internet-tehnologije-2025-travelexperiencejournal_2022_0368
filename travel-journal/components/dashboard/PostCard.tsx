@@ -19,7 +19,8 @@ export default function PostCard({ post, author, destination }: PostCardProps) {
   };
 
   return (
-    <Link href={`/posts/${post.postId}`}> {/* ✅ Promena */}
+    <Link href={`/posts/${post.postId}`}> {/* ✅ OVAKO - detail stranica */}
+      {/* NE: <Link href={`/posts/${post.postId}/edit`}> ❌ LOŠE */}
       <Card hoverable className="h-full">
         <div className="space-y-3">
           {/* Title */}
