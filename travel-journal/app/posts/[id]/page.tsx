@@ -8,6 +8,12 @@ import CommentSection from '@/components/posts/CommentSection';
 import Image from 'next/image';
 import { Calendar, MapPin, Clock } from 'lucide-react';
 import RatingSection from '@/components/posts/RatingSection';
+import dynamic from 'next/dynamic';
+
+const DestinationMap = dynamic(
+  () => import('@/components/map/DestinationMap'),
+  { ssr: false }
+);
 
 interface PostPageProps {
   params: {
@@ -39,6 +45,8 @@ interface SerializableDestination {
   description: string;
   imageURL?: string;
   imageAttribution?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface SerializableComment {
@@ -128,6 +136,8 @@ async function getPostData(postId: string) {
         description: destData.description || '',
         imageURL: destData.imageURL || '',
         imageAttribution: destData.imageAttribution || '',
+        latitude: destData.latitude || null,
+        longitude: destData.longitude || null,
       } as SerializableDestination : null,
       comments,
       commentAuthors,
@@ -228,18 +238,29 @@ export default async function PostDetailPage({ params }: PostPageProps) {
           </div>
 
           {destination && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">
-                O destinaciji: {destination.name}
-              </h3>
-              <p className="text-blue-800 text-sm">{destination.description}</p>
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <RatingSection
-                  destinationId={destination.destinationId}
-                  destinationName={destination.name}
-                />
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  O destinaciji: {destination.name}
+                </h3>
+                <p className="text-blue-800 text-sm">{destination.description}</p>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <RatingSection
+                    destinationId={destination.destinationId}
+                    destinationName={destination.name}
+                  />
+                </div>
               </div>
-            </div>
+              {destination.latitude && destination.longitude && (
+                <div className="mt-4">
+                  <DestinationMap
+                    destinations={[destination as any]}
+                    height="300px"
+                    singleDestination={true}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </Card>

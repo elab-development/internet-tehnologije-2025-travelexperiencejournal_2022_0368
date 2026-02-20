@@ -562,6 +562,8 @@
           "averageRating": { "type": "number" },
           "imageURL": { "type": "string", "description": "URL slike sa Unsplash-a" },
           "imageAttribution": { "type": "string", "description": "Attribution za fotografa" },
+          "latitude": { "type": "number", "nullable": true, "example": 48.8566, "description": "Geografska širina (OpenStreetMap)" },
+          "longitude": { "type": "number", "nullable": true, "example": 2.3522, "description": "Geografska dužina (OpenStreetMap)" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }

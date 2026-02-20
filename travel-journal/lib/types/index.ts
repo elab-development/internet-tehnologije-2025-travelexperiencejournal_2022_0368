@@ -27,6 +27,8 @@ export interface Destination {
   averageRating?: number;         // Izračunato iz Rating-a
   imageURL?: string;              // Unsplash slika
   imageAttribution?: string;      // Attribution za Unsplash
+  latitude?: number;              // OpenStreetMap geocoding
+  longitude?: number;             // OpenStreetMap geocoding
   createdAt: Date;
   updatedAt: Date;
 }
