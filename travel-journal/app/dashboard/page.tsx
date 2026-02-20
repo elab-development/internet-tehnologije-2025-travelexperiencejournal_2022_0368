@@ -2,6 +2,8 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { redirect } from 'next/navigation';
 import { adminDb } from '@/lib/firebase/admin';
+
+export const dynamic = 'force-dynamic';
 import { Post, User, Destination } from '@/lib/types';
 import PostCard from '@/components/dashboard/PostCard';
 import Link from 'next/link';
