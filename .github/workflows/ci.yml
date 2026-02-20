@@ -115,7 +115,7 @@ jobs:
         run: npm run build
 
   # ──────────────────────────────────
-  # JOB 4: Docker build (placeholder — aktivira se u commitu 5)
+  # JOB 4: Docker build
   # ──────────────────────────────────
   docker:
     name: Build Docker Image
@@ -132,5 +132,15 @@ jobs:
 
       - name: Build Docker image
         run: |
-          echo "Docker build will be configured in commit 5"
-          # docker build -t travel-journal:latest ./travel-journal
+          docker build \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=dummy \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=dummy \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=dummy \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=dummy \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=dummy \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=dummy \
+            -t travel-journal:${{ github.sha }} \
+            ./travel-journal
+
+      - name: Verify image
+        run: docker images travel-journal

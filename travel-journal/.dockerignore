@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env.local
+.env
+coverage
+__tests__
+__mocks__
+scripts/serviceAccount.json
+.github
