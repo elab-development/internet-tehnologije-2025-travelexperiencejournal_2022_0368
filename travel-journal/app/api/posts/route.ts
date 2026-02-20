@@ -53,14 +53,7 @@ export async function GET(request: NextRequest) {
 
 
 
-// Validaciona šema
-const createPostSchema = z.object({
-  title: z.string().min(3, 'Naslov mora imati najmanje 3 karaktera'),
-  content: z.string().min(10, 'Sadržaj mora imati najmanje 10 karaktera'),
-  destinationId: z.string().min(1, 'Destinacija je obavezna'),
-  travelDate: z.string(),
-  isPublished: z.boolean().optional(),
-});
+import { createPostSchema } from '@/lib/validation/schemas';
 
 export async function POST(request: NextRequest) {
   try {

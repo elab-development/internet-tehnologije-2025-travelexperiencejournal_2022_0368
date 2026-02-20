@@ -3,11 +3,7 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authConfig } from '@/lib/auth/auth.config';
 import { adminDb } from '@/lib/firebase/admin';
-
-const ratingSchema = z.object({
-  destinationId: z.string().min(1),
-  score: z.number().int().min(1).max(5),
-});
+import { ratingSchema } from '@/lib/validation/schemas';
 
 // GET - Ocene za destinaciju
 export async function GET(request: NextRequest) {
