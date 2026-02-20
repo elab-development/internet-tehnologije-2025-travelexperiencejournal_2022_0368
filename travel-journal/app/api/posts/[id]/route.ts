@@ -38,6 +38,20 @@ export async function GET(
       .get();
     const destData = destDoc.exists ? destDoc.data() : null;
 
+    // Uzmi prosečnu ocenu destinacije
+    let avgRating = destData?.averageRating ?? 0;
+    if (destData && !destData.averageRating) {
+      const ratingsSnapshot = await adminDb
+        .collection('ratings')
+        .where('destinationId', '==', postData!.destinationId)
+        .get();
+      if (!ratingsSnapshot.empty) {
+        let total = 0;
+        ratingsSnapshot.forEach((doc) => { total += doc.data().score; });
+        avgRating = Math.round((total / ratingsSnapshot.size) * 10) / 10;
+      }
+    }
+
     // Uzmi komentare
     const commentsSnapshot = await adminDb
       .collection('comments')
@@ -65,7 +79,7 @@ export async function GET(
           travelDate: postData?.travelDate?.toDate(),
         },
         author: authorData,
-        destination: destData,
+        destination: destData ? { ...destData, averageRating: avgRating } : null,
         comments,
       },
       { status: 200 }

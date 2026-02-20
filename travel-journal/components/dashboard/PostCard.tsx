@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import { Post, User, Destination } from '@/lib/types';
-import { Calendar, MapPin, User as UserIcon } from 'lucide-react';
+import { Calendar, MapPin, Star, User as UserIcon } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
@@ -40,6 +40,14 @@ export default function PostCard({ post, author, destination }: PostCardProps) {
                 <span>
                   {destination.name}, {destination.country}
                 </span>
+              </div>
+            )}
+
+            {/* Average rating */}
+            {destination && destination.averageRating != null && destination.averageRating > 0 && (
+              <div className="flex items-center gap-1 text-sm text-yellow-600">
+                <Star className="w-4 h-4 fill-yellow-400" />
+                <span>{destination.averageRating.toFixed(1)}</span>
               </div>
             )}
 

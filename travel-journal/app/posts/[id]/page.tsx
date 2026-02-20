@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card';
 import PostActions from '@/components/posts/PostActions';
 import CommentSection from '@/components/posts/CommentSection';
 import { Calendar, MapPin, Clock } from 'lucide-react';
+import RatingSection from '@/components/posts/RatingSection';
 
 interface PostPageProps {
   params: {
@@ -214,6 +215,12 @@ export default async function PostDetailPage({ params }: PostPageProps) {
                 O destinaciji: {destination.name}
               </h3>
               <p className="text-blue-800 text-sm">{destination.description}</p>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <RatingSection
+                  destinationId={destination.destinationId}
+                  destinationName={destination.name}
+                />
+              </div>
             </div>
           )}
         </div>
