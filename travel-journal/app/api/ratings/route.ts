@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { authConfig } from '@/lib/auth/auth.config';
 import { adminDb } from '@/lib/firebase/admin';
 import { ratingSchema } from '@/lib/validation/schemas';
+import { checkRateLimit } from '@/lib/security/withRateLimit';
+import { mutationLimiter } from '@/lib/security/rateLimiter';
 
 // GET - Ocene za destinaciju
 export async function GET(request: NextRequest) {
@@ -66,6 +68,10 @@ export async function GET(request: NextRequest) {
 
 // POST - Oceni destinaciju (kreiraj ili ažuriraj)
 export async function POST(request: NextRequest) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authConfig);
     if (!session?.user) {

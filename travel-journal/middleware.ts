@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@/lib/types';
+import { validateCSRF } from '@/lib/security/csrf';
 
 const protectedRoutes = [
   '/dashboard',
@@ -15,6 +16,14 @@ const editorRoutes = ['/posts/edit', '/destinations/manage'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ── CSRF zaštita ──
+  if (pathname.startsWith('/api/') && !validateCSRF(request)) {
+    return NextResponse.json(
+      { error: 'CSRF validation failed — zahtev odbijen' },
+      { status: 403 }
+    );
+  }
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)

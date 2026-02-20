@@ -4,8 +4,15 @@ import { authConfig } from '@/lib/auth/auth.config';
 import { adminDb } from '@/lib/firebase/admin';
 import { z } from 'zod';
 import { updateProfileSchema } from '@/lib/validation/schemas';
+import { sanitizeObject } from '@/lib/security/sanitize';
+import { checkRateLimit } from '@/lib/security/withRateLimit';
+import { mutationLimiter } from '@/lib/security/rateLimiter';
 
 export async function PUT(request: NextRequest) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authConfig);
     if (!session?.user) {
@@ -17,15 +24,16 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = updateProfileSchema.parse(body);
+    const sanitizedData = sanitizeObject(validatedData);
 
     // Ažuriraj dokument u Firestore
     await adminDb
       .collection('users')
       .doc(session.user.id)
       .update({
-        displayName: validatedData.displayName,
-        bio: validatedData.bio || '',
-        profilePhotoURL: validatedData.profilePhotoURL || '',
+        displayName: sanitizedData.displayName,
+        bio: sanitizedData.bio || '',
+        profilePhotoURL: sanitizedData.profilePhotoURL || '',
         updatedAt: new Date(),
       });
 
