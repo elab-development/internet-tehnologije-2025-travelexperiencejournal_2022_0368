@@ -1,0 +1,560 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Travel Experience Journal API",
+    "description": "REST API za platformu za deljenje putničkih iskustava",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Travel Journal Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Lokalni development server"
+    }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Autentifikacija korisnika" },
+    { "name": "Posts", "description": "CRUD operacije za putopise" },
+    { "name": "Comments", "description": "Komentari na putopise" },
+    { "name": "Destinations", "description": "Upravljanje destinacijama" },
+    { "name": "Ratings", "description": "Ocenjivanje destinacija" },
+    { "name": "Profile", "description": "Upravljanje korisničkim profilom" }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Registracija novog korisnika",
+        "description": "Kreira novog korisnika u Firebase Auth i Firestore",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Korisnik uspešno registrovan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegisterResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validaciona greška ili korisnik već postoji",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server greška",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Lista putopisa",
+        "description": "Vraća listu objavljenih putopisa, sortirano po datumu",
+        "parameters": [
+          {
+            "name": "authorId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter po autoru"
+          },
+          {
+            "name": "destinationId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter po destinaciji"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Maksimalan broj rezultata"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista putopisa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "posts": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Post" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server greška",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Kreiranje novog putopisa",
+        "description": "Kreira novi putopis (potrebna autentifikacija)",
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePostRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Putopis uspešno kreiran",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "post": { "$ref": "#/components/schemas/Post" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Validaciona greška" },
+          "401": { "description": "Neautentifikovan" },
+          "500": { "description": "Server greška" }
+        }
+      }
+    },
+
+    "/api/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Detalji putopisa",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalji putopisa sa autorom, destinacijom i komentarima",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PostDetail" }
+              }
+            }
+          },
+          "404": { "description": "Putopis ne postoji" },
+          "500": { "description": "Server greška" }
+        }
+      },
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Ažuriranje putopisa",
+        "description": "Samo autor, editor ili admin",
+        "security": [{ "session": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePostRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Putopis uspešno ažuriran" },
+          "401": { "description": "Neautentifikovan" },
+          "403": { "description": "Nemate dozvolu" },
+          "404": { "description": "Putopis ne postoji" }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Brisanje putopisa",
+        "description": "Samo autor ili admin. Briše i sve komentare (cascade)",
+        "security": [{ "session": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Putopis uspešno obrisan" },
+          "401": { "description": "Neautentifikovan" },
+          "403": { "description": "Nemate dozvolu" },
+          "404": { "description": "Putopis ne postoji" }
+        }
+      }
+    },
+
+    "/api/comments": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Komentari za post",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista komentara",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "comments": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Comment" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "postId je obavezan" }
+        }
+      },
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Dodavanje komentara",
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCommentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Komentar uspešno dodat" },
+          "400": { "description": "Validaciona greška ili post ne postoji" },
+          "401": { "description": "Neautentifikovan" }
+        }
+      }
+    },
+
+    "/api/destinations": {
+      "get": {
+        "tags": ["Destinations"],
+        "summary": "Lista destinacija",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter po državi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista destinacija",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "destinations": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Destination" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Destinations"],
+        "summary": "Kreiranje destinacije",
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateDestinationRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Destinacija uspešno kreirana" },
+          "400": { "description": "Validaciona greška ili destinacija već postoji" },
+          "401": { "description": "Neautentifikovan" }
+        }
+      }
+    },
+
+    "/api/ratings": {
+      "get": {
+        "tags": ["Ratings"],
+        "summary": "Ocene za destinaciju",
+        "parameters": [
+          {
+            "name": "destinationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ocene za destinaciju",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RatingsResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Ratings"],
+        "summary": "Oceni destinaciju",
+        "description": "Korisnik može dati jednu ocenu po destinaciji (1-5). Ponovni poziv ažurira postojeću ocenu.",
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateRatingRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Ocena uspešno sačuvana" },
+          "400": { "description": "Validaciona greška" },
+          "401": { "description": "Neautentifikovan" }
+        }
+      }
+    },
+
+    "/api/profile": {
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Ažuriranje profila",
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil uspešno ažuriran" },
+          "400": { "description": "Validaciona greška" },
+          "401": { "description": "Neautentifikovan" }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "next-auth.session-token",
+        "description": "NextAuth JWT session cookie"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Greška pri obradi zahteva" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password", "displayName"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "korisnik@primer.com" },
+          "password": { "type": "string", "minLength": 6, "example": "mojasifra123" },
+          "displayName": { "type": "string", "minLength": 2, "example": "Marko Marković" }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "user": {
+            "type": "object",
+            "properties": {
+              "uid": { "type": "string" },
+              "email": { "type": "string" },
+              "displayName": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "postId": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "authorId": { "type": "string" },
+          "destinationId": { "type": "string" },
+          "travelDate": { "type": "string", "format": "date-time" },
+          "isPublished": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PostDetail": {
+        "type": "object",
+        "properties": {
+          "post": { "$ref": "#/components/schemas/Post" },
+          "author": {
+            "type": "object",
+            "properties": {
+              "uid": { "type": "string" },
+              "displayName": { "type": "string" }
+            }
+          },
+          "destination": { "$ref": "#/components/schemas/Destination" },
+          "comments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Comment" }
+          }
+        }
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "required": ["title", "content", "destinationId", "travelDate"],
+        "properties": {
+          "title": { "type": "string", "minLength": 3, "example": "Magični vikend u Parizu" },
+          "content": { "type": "string", "minLength": 10, "example": "Pariz je grad koji ostavlja bez daha..." },
+          "destinationId": { "type": "string", "example": "abc123" },
+          "travelDate": { "type": "string", "format": "date", "example": "2024-06-15" },
+          "isPublished": { "type": "boolean", "default": true }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "commentId": { "type": "string" },
+          "postId": { "type": "string" },
+          "authorId": { "type": "string" },
+          "content": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "required": ["postId", "content"],
+        "properties": {
+          "postId": { "type": "string", "example": "post123" },
+          "content": { "type": "string", "example": "Odličan putopis!" }
+        }
+      },
+      "Destination": {
+        "type": "object",
+        "properties": {
+          "destinationId": { "type": "string" },
+          "name": { "type": "string" },
+          "country": { "type": "string" },
+          "description": { "type": "string" },
+          "createdBy": { "type": "string" },
+          "averageRating": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateDestinationRequest": {
+        "type": "object",
+        "required": ["name", "country", "description"],
+        "properties": {
+          "name": { "type": "string", "minLength": 2, "example": "Pariz" },
+          "country": { "type": "string", "minLength": 2, "example": "Francuska" },
+          "description": { "type": "string", "minLength": 10, "example": "Grad svetlosti sa Ajfelovom kulom" }
+        }
+      },
+      "RatingsResponse": {
+        "type": "object",
+        "properties": {
+          "ratings": { "type": "array", "items": { "$ref": "#/components/schemas/Rating" } },
+          "averageRating": { "type": "number", "example": 4.3 },
+          "totalRatings": { "type": "integer", "example": 7 },
+          "userRating": { "type": "integer", "nullable": true, "example": 5 }
+        }
+      },
+      "Rating": {
+        "type": "object",
+        "properties": {
+          "ratingId": { "type": "string" },
+          "destinationId": { "type": "string" },
+          "userId": { "type": "string" },
+          "score": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateRatingRequest": {
+        "type": "object",
+        "required": ["destinationId", "score"],
+        "properties": {
+          "destinationId": { "type": "string", "example": "dest123" },
+          "score": { "type": "integer", "minimum": 1, "maximum": 5, "example": 4 }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "required": ["displayName"],
+        "properties": {
+          "displayName": { "type": "string", "minLength": 2, "example": "Marko Marković" },
+          "bio": { "type": "string", "example": "Strastveni putnik" },
+          "profilePhotoURL": { "type": "string", "format": "uri", "example": "https://example.com/photo.jpg" }
+        }
+      }
+    }
+  }
+}
