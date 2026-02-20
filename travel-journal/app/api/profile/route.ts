@@ -3,12 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { adminDb } from '@/lib/firebase/admin';
 import { z } from 'zod';
-
-const updateProfileSchema = z.object({
-  displayName: z.string().min(2, 'Ime mora imati najmanje 2 karaktera'),
-  bio: z.string().optional(),
-  profilePhotoURL: z.string().url().optional().or(z.literal('')),
-});
+import { updateProfileSchema } from '@/lib/validation/schemas';
 
 export async function PUT(request: NextRequest) {
   try {

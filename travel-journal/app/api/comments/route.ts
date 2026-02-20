@@ -44,11 +44,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
+import { createCommentSchema } from '@/lib/validation/schemas';
+
 // POST - Kreiranje novog komentara
-const createCommentSchema = z.object({
-  postId: z.string().min(1, 'Post ID je obavezan'),
-  content: z.string().min(1, 'Sadržaj komentara je obavezan'),
-});
 
 export async function POST(request: NextRequest) {
   try {

@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { UserRole } from "@/lib/types";
 import { z } from "zod";
-
-// Validaciona šema
-const registerSchema = z.object({
-  email: z.string().email("Neispravna email adresa"),
-  password: z.string().min(6, "Lozinka mora imati najmanje 6 karaktera"),
-  displayName: z.string().min(2, "Ime mora imati najmanje 2 karaktera"),
-});
+import { registerSchema } from "@/lib/validation/schemas";
 
 export async function POST(request: NextRequest) {
   try {

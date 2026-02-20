@@ -39,12 +39,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
+import { createDestinationSchema } from '@/lib/validation/schemas';
+
 // POST - Kreiranje nove destinacije
-const createDestinationSchema = z.object({
-  name: z.string().min(2, 'Naziv mora imati najmanje 2 karaktera'),
-  country: z.string().min(2, 'Država je obavezna'),
-  description: z.string().min(10, 'Opis mora imati najmanje 10 karaktera'),
-});
 
 export async function POST(request: NextRequest) {
   try {
