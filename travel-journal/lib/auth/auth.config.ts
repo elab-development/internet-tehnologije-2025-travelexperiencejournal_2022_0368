@@ -17,6 +17,27 @@ export const authConfig: NextAuthOptions = {
         }
 
         try {
+          // 1. Verifikuj lozinku putem Firebase Identity Platform REST API
+          const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+          const signInRes = await fetch(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+                returnSecureToken: true,
+              }),
+            }
+          );
+
+          if (!signInRes.ok) {
+            // Pogrešna lozinka ili korisnik ne postoji
+            return null;
+          }
+
+          // 2. Preuzmi dodatne podatke korisnika (rola, displayName) iz Firestore-a
           const userRecord = await adminAuth.getUserByEmail(
             credentials.email as string
           );
