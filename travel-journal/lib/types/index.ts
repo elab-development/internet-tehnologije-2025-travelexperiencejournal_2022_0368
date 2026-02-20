@@ -25,6 +25,10 @@ export interface Destination {
   description: string;
   createdBy: string;              // User.uid
   averageRating?: number;         // Izračunato iz Rating-a
+  imageURL?: string;              // Unsplash slika
+  imageAttribution?: string;      // Attribution za Unsplash
+  latitude?: number;              // OpenStreetMap geocoding
+  longitude?: number;             // OpenStreetMap geocoding
   createdAt: Date;
   updatedAt: Date;
 }

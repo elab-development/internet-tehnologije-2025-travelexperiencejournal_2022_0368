@@ -5,8 +5,15 @@ import { adminDb } from '@/lib/firebase/admin';
 import Card from '@/components/ui/Card';
 import PostActions from '@/components/posts/PostActions';
 import CommentSection from '@/components/posts/CommentSection';
+import Image from 'next/image';
 import { Calendar, MapPin, Clock } from 'lucide-react';
 import RatingSection from '@/components/posts/RatingSection';
+import dynamic from 'next/dynamic';
+
+const DestinationMap = dynamic(
+  () => import('@/components/map/DestinationMap'),
+  { ssr: false }
+);
 
 interface PostPageProps {
   params: {
@@ -36,6 +43,10 @@ interface SerializableDestination {
   name: string;
   country: string;
   description: string;
+  imageURL?: string;
+  imageAttribution?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface SerializableComment {
@@ -123,6 +134,10 @@ async function getPostData(postId: string) {
         name: destData.name || '',
         country: destData.country || '',
         description: destData.description || '',
+        imageURL: destData.imageURL || '',
+        imageAttribution: destData.imageAttribution || '',
+        latitude: destData.latitude || null,
+        longitude: destData.longitude || null,
       } as SerializableDestination : null,
       comments,
       commentAuthors,
@@ -159,6 +174,19 @@ export default async function PostDetailPage({ params }: PostPageProps) {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Card>
         <div className="space-y-6">
+          {/* Slika destinacije */}
+          {destination?.imageURL && (
+            <div className="relative h-64 -mx-6 -mt-4 overflow-hidden rounded-t-lg">
+              <Image
+                src={destination.imageURL}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
+          )}
+
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -210,18 +238,29 @@ export default async function PostDetailPage({ params }: PostPageProps) {
           </div>
 
           {destination && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">
-                O destinaciji: {destination.name}
-              </h3>
-              <p className="text-blue-800 text-sm">{destination.description}</p>
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <RatingSection
-                  destinationId={destination.destinationId}
-                  destinationName={destination.name}
-                />
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  O destinaciji: {destination.name}
+                </h3>
+                <p className="text-blue-800 text-sm">{destination.description}</p>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <RatingSection
+                    destinationId={destination.destinationId}
+                    destinationName={destination.name}
+                  />
+                </div>
               </div>
-            </div>
+              {destination.latitude && destination.longitude && (
+                <div className="mt-4">
+                  <DestinationMap
+                    destinations={[destination as any]}
+                    height="300px"
+                    singleDestination={true}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </Card>

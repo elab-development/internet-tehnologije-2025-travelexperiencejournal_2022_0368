@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { LogOut, User, Home, MapPin, PenSquare, FileText } from 'lucide-react';
+import { LogOut, User, Home, MapPin, PenSquare, FileText, Map } from 'lucide-react';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -54,6 +54,14 @@ export default function Navbar() {
     >
       <PenSquare className="w-5 h-5" />
       <span className="hidden sm:inline">Novi putopis</span>
+    </Link>
+
+    <Link
+      href="/destinations"
+      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition"
+    >
+      <Map className="w-5 h-5" />
+      <span className="hidden sm:inline">Mapa</span>
     </Link>
 
     {/* ✅ DODAJ OVO */}

@@ -4,6 +4,8 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { z } from 'zod';
 import { Destination } from '@/lib/types';
+import { getDestinationImage } from '@/lib/external/unsplash';
+import { geocodeDestination } from '@/lib/external/geocoding';
 
 // GET - Lista destinacija
 export async function GET(request: NextRequest) {
@@ -70,6 +72,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Dohvati sliku iz Unsplash-a
+    const imageData = await getDestinationImage(
+      validatedData.name,
+      validatedData.country
+    );
+
+    // Dohvati koordinate
+    const coords = await geocodeDestination(
+      validatedData.name,
+      validatedData.country
+    );
+
     const destRef = adminDb.collection('destinations').doc();
     const destData = {
       destinationId: destRef.id,
@@ -78,6 +92,10 @@ export async function POST(request: NextRequest) {
       description: validatedData.description,
       createdBy: session.user.id,
       averageRating: 0,
+      imageURL: imageData?.imageURL || '',
+      imageAttribution: imageData?.imageAttribution || '',
+      latitude: coords?.latitude || null,
+      longitude: coords?.longitude || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

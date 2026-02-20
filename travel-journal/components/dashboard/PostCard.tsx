@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Card from '@/components/ui/Card';
 import { Post, User, Destination } from '@/lib/types';
 import { Calendar, MapPin, Star, User as UserIcon } from 'lucide-react';
@@ -22,6 +23,24 @@ export default function PostCard({ post, author, destination }: PostCardProps) {
     <Link href={`/posts/${post.postId}`}> {/* ✅ OVAKO - detail stranica */}
       {/* NE: <Link href={`/posts/${post.postId}/edit`}> ❌ LOŠE */}
       <Card hoverable className="h-full">
+        {/* Slika destinacije */}
+        {destination?.imageURL && (
+          <div className="relative h-48 -mx-6 -mt-4 mb-4 overflow-hidden rounded-t-lg">
+            <Image
+              src={destination.imageURL}
+              alt={destination.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+            {destination.imageAttribution && (
+              <p className="absolute bottom-1 right-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded">
+                {destination.imageAttribution}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="space-y-3">
           {/* Title */}
           <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">
