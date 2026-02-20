@@ -118,6 +118,8 @@ async function getDestinations(
             description: data?.description || '',
             createdBy: data?.createdBy || '',
             averageRating: data?.averageRating || 0,
+            imageURL: data?.imageURL || '',
+            imageAttribution: data?.imageAttribution || '',
             createdAt: data?.createdAt?.toDate() || new Date(),
             updatedAt: data?.updatedAt?.toDate() || new Date(),
           } as Destination;

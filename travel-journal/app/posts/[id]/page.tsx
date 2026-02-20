@@ -5,6 +5,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import Card from '@/components/ui/Card';
 import PostActions from '@/components/posts/PostActions';
 import CommentSection from '@/components/posts/CommentSection';
+import Image from 'next/image';
 import { Calendar, MapPin, Clock } from 'lucide-react';
 import RatingSection from '@/components/posts/RatingSection';
 
@@ -36,6 +37,8 @@ interface SerializableDestination {
   name: string;
   country: string;
   description: string;
+  imageURL?: string;
+  imageAttribution?: string;
 }
 
 interface SerializableComment {
@@ -123,6 +126,8 @@ async function getPostData(postId: string) {
         name: destData.name || '',
         country: destData.country || '',
         description: destData.description || '',
+        imageURL: destData.imageURL || '',
+        imageAttribution: destData.imageAttribution || '',
       } as SerializableDestination : null,
       comments,
       commentAuthors,
@@ -159,6 +164,19 @@ export default async function PostDetailPage({ params }: PostPageProps) {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Card>
         <div className="space-y-6">
+          {/* Slika destinacije */}
+          {destination?.imageURL && (
+            <div className="relative h-64 -mx-6 -mt-4 overflow-hidden rounded-t-lg">
+              <Image
+                src={destination.imageURL}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
+          )}
+
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
