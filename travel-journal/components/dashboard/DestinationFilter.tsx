@@ -17,7 +17,7 @@ export default function DestinationFilter({
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
     if (value) {
       params.set('destinationId', value);
     } else {

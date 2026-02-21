@@ -8,10 +8,15 @@ import Button from '@/components/ui/Button';
 import { Comment, User } from '@/lib/types';
 import { MessageSquare, Send } from 'lucide-react';
 
+type SerializableComment = Omit<Comment, 'createdAt' | 'updatedAt'> & {
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
 interface CommentSectionProps {
   postId: string;
-  comments: Comment[];
-  commentAuthors: Record<string, User>;
+  comments: SerializableComment[];
+  commentAuthors: Record<string, Pick<User, 'uid' | 'displayName'>>;
   currentUserId?: string;
 }
 
@@ -70,7 +75,7 @@ export default function CommentSection({
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString('sr-RS', {
       day: 'numeric',
       month: 'long',

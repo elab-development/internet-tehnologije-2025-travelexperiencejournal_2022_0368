@@ -1,22 +1,18 @@
 # ============================================
-# Stage 1: Install dependencies
+# Stage 1: Build application
 # ============================================
-FROM node:18-alpine AS deps
+FROM node:18-alpine AS builder
+
+# Required for native modules on Alpine (musl libc)
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --only=production
+# Install ALL deps (dev included) so the build has everything it needs
+RUN npm ci
 
-# ============================================
-# Stage 2: Build application
-# ============================================
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ARG NEXT_PUBLIC_FIREBASE_API_KEY
@@ -36,7 +32,7 @@ ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 RUN npm run build
 
 # ============================================
-# Stage 3: Production runner
+# Stage 2: Production runner
 # ============================================
 FROM node:18-alpine AS runner
 
