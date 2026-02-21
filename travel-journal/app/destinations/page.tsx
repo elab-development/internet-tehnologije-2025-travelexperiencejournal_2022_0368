@@ -8,7 +8,7 @@ import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 
 // Dynamic import — Leaflet ne radi na serveru
-const DestinationMap = dynamic(
+const DestinationMap = noSSR(
   () => import('@/components/map/DestinationMap'),
   {
     ssr: false,

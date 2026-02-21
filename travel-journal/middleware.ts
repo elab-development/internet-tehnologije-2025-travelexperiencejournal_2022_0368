@@ -4,7 +4,6 @@ import { UserRole } from '@/lib/types';
 import { validateCSRF } from '@/lib/security/csrf';
 
 const protectedRoutes = [
-  '/dashboard',
   '/profile',
   '/posts/create',
   '/posts/edit',

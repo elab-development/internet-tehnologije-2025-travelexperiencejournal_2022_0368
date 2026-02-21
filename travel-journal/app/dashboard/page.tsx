@@ -1,6 +1,5 @@
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
-import { redirect } from 'next/navigation';
 import { adminDb } from '@/lib/firebase/admin';
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -220,12 +219,8 @@ interface DashboardPageProps {
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  // ✅ Autentifikacija
   const session = await getServerSession(authConfig);
-
-  if (!session) {
-    redirect('/login');
-  }
+  const isLoggedIn = !!session;
 
   const selectedDestinationId = searchParams.destinationId || '';
 
@@ -252,18 +247,22 @@ export default async function DashboardPage({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Dobrodošao, {session.user?.name}!
+              {isLoggedIn
+                ? `Dobrodošao, ${session!.user?.name}!`
+                : 'Istraži putopise'}
             </h1>
             <p className="text-gray-600 mt-2">
               Istraži najnovije putopise iz cele zajednice
             </p>
           </div>
-          <Link href="/posts/create">
-            <Button variant="primary" size="lg" className="flex items-center gap-2">
-              <PenSquare className="w-5 h-5" />
-              Novi putopis
-            </Button>
-          </Link>
+          {isLoggedIn && (
+            <Link href="/posts/create">
+              <Button variant="primary" size="lg" className="flex items-center gap-2">
+                <PenSquare className="w-5 h-5" />
+                Novi putopis
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Filter */}
