@@ -1,11 +1,5 @@
 import { NextRequest } from 'next/server';
 
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'https://localhost:3000',
-  process.env.NEXTAUTH_URL,
-].filter(Boolean);
-
 /**
  * Proverava da li je zahtev došao sa dozvoljenog origina.
  * Vraća true ako je zahtev validan, false ako je sumnjiv.
@@ -23,21 +17,27 @@ export function validateCSRF(request: NextRequest): boolean {
     return true;
   }
 
+  // Same-origin request: origin mora da se poklapa sa hostom samog zahteva.
+  // Ovo pokriva localhost, Vercel URL-ove, custom domene i preview deploymente —
+  // bez potrebe da se svaki URL hardkoduje.
+  const requestOrigin = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+
+  const allowedOrigins = [
+    requestOrigin,
+    process.env.NEXTAUTH_URL,
+  ].filter(Boolean) as string[];
+
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
 
   // Proveri Origin header
   if (origin) {
-    return ALLOWED_ORIGINS.some((allowed) =>
-      origin.startsWith(allowed as string)
-    );
+    return allowedOrigins.some((allowed) => origin.startsWith(allowed));
   }
 
   // Fallback: proveri Referer
   if (referer) {
-    return ALLOWED_ORIGINS.some((allowed) =>
-      referer.startsWith(allowed as string)
-    );
+    return allowedOrigins.some((allowed) => referer.startsWith(allowed));
   }
 
   // Nema ni Origin ni Referer — sumnjivo za browser zahteve
