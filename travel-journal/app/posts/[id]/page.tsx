@@ -54,6 +54,7 @@ interface SerializableComment {
   postId: string;
   authorId: string;
   content: string;
+  isHidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +93,7 @@ async function getPostData(postId: string) {
         postId: commentData.postId,
         authorId: commentData.authorId,
         content: commentData.content,
+        isHidden: commentData.isHidden ?? false,
         createdAt: commentData.createdAt?.toDate().toISOString() || new Date().toISOString(),
         updatedAt: commentData.updatedAt?.toDate().toISOString() || new Date().toISOString(),
       });
@@ -160,7 +162,15 @@ export default async function PostDetailPage({ params }: PostPageProps) {
 
   const isAuthor = session?.user?.id === post.authorId;
   const isAdmin = session?.user?.role === 'admin';
-  const canEdit = isAuthor || isAdmin;
+  const isEditor = session?.user?.role === 'editor';
+  const isModerator = isAdmin || isEditor;
+  const canEdit = isAuthor || isAdmin || isEditor;
+  const canDelete = isAuthor || isAdmin;
+
+  // Skriveni komentari vidljivi samo editorima i adminima
+  const visibleComments = isModerator
+    ? comments
+    : comments.filter((c) => !c.isHidden);
 
   const formatDate = (isoString: string) => {
     return new Date(isoString).toLocaleDateString('sr-RS', {
@@ -227,6 +237,7 @@ export default async function PostDetailPage({ params }: PostPageProps) {
                 postId={post.postId}
                 isAuthor={isAuthor}
                 isAdmin={isAdmin}
+                canDelete={canDelete}
               />
             )}
           </div>
@@ -268,9 +279,11 @@ export default async function PostDetailPage({ params }: PostPageProps) {
       <div className="mt-8">
         <CommentSection
           postId={post.postId}
-          comments={comments}
+          comments={visibleComments}
           commentAuthors={commentAuthors}
           currentUserId={session?.user?.id}
+          isEditor={isEditor}
+          isAdmin={isAdmin}
         />
       </div>
     </div>

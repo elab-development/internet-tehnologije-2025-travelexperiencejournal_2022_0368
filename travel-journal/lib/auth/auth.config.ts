@@ -53,6 +53,11 @@ export const authConfig: NextAuthOptions = {
 
           const userData = userDoc.data();
 
+          // Blokirani korisnici ne mogu da se prijave
+          if (userData?.isBlocked) {
+            return null;
+          }
+
           return {
             id: userRecord.uid,
             email: userRecord.email!,

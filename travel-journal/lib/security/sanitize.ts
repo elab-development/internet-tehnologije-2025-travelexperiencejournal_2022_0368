@@ -1,5 +1,3 @@
-import DOMPurify from 'isomorphic-dompurify';
-
 /**
  * Sanitizuje HTML string — uklanja sve opasne tagove i atribute.
  * Koristi se za SVE korisničke inpute pre čuvanja u bazu.
@@ -8,12 +6,7 @@ export function sanitizeInput(input: string): string {
   if (!input) return input;
 
   // Ukloni SVE HTML tagove — čist tekst
-  const clean = DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [],       // nijedan HTML tag
-    ALLOWED_ATTR: [],       // nijedan atribut
-  });
-
-  return clean.trim();
+  return input.replace(/<[^>]*>/g, '').trim();
 }
 
 /**

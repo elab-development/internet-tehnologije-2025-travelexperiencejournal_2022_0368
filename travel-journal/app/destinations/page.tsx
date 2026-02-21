@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { adminDb } from '@/lib/firebase/admin';
 import { Destination } from '@/lib/types';
 import Card from '@/components/ui/Card';
-import dynamic from 'next/dynamic';
+import noSSR from 'next/dynamic';
 import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,14 +20,21 @@ const DestinationMap = dynamic(
   }
 );
 
-async function getDestinations(): Promise<Destination[]> {
+// Dates serialized to ISO strings so the data can safely cross the
+// server → client component boundary (Next.js cannot serialize Date objects).
+interface SerializableDestination extends Omit<Destination, 'createdAt' | 'updatedAt'> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+async function getDestinations(): Promise<SerializableDestination[]> {
   try {
     const snapshot = await adminDb
       .collection('destinations')
       .orderBy('name', 'asc')
       .get();
 
-    const destinations: Destination[] = [];
+    const destinations: SerializableDestination[] = [];
     snapshot.forEach((doc) => {
       const data = doc.data();
       destinations.push({
@@ -39,9 +48,9 @@ async function getDestinations(): Promise<Destination[]> {
         imageAttribution: data.imageAttribution || '',
         latitude: data.latitude || null,
         longitude: data.longitude || null,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
-      } as Destination);
+        createdAt: data.createdAt?.toDate()?.toISOString() ?? '',
+        updatedAt: data.updatedAt?.toDate()?.toISOString() ?? '',
+      });
     });
 
     return destinations;
@@ -52,7 +61,7 @@ async function getDestinations(): Promise<Destination[]> {
 }
 
 export default async function DestinationsPage() {
-  const destinations = await getDestinations();
+  const destinations: SerializableDestination[] = await getDestinations();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -102,7 +111,7 @@ export default async function DestinationsPage() {
       </Card>
 
       {/* Mapa */}
-      <DestinationMap destinations={destinations} height="500px" />
+      <DestinationMap destinations={destinations as any} height="500px" />
 
       {/* Lista destinacija ispod mape */}
       <div className="mt-8">
