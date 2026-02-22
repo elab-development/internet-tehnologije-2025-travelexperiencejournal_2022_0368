@@ -1,145 +1,89 @@
-# ✈️ Travel Experience Journal
+# Travel Experience Journal
 
-Veb platforma za deljenje putničkih iskustava. Korisnici kreiraju putopise, ocenjuju destinacije, ostavljaju komentare i istražuju mapu destinacija.
+## O aplikaciji
 
-![CI/CD](https://github.com/elab-development/internet-tehnologije-2025-travelexperiencejournal_2022_0368/actions/workflows/ci.yml/badge.svg)
+U savremenom svetu putovanja, korisnici se suočavaju sa fragmentiranim iskustvom pri deljenju i pretraživanju autentičnih putnih iskustava. Klasični blogovi zahtevaju tehničko znanje, društvene mreže nemaju strukturu specifičnu za putopise, a forumi često nedostaju moderne funkcionalnosti. Postoji potreba za centralizovanom platformom koja omogućava jednostavno kreiranje, organizovanje i deljenje putničkih iskustava uz interakciju sa zajednicom.
+
+**Travel Experience Journal** kombinuje elemente CMS-a sa funkcionalnostima društvene mreže. Korisnici mogu kreirati putopise, dodavati destinacije, ocenjivati lokacije i deliti fotografije – sve na jednom mestu. Platforma primenjuje cloud i edge computing principe za optimalne performanse.
+
+**Ciljevi aplikacije:**
+- Omogućiti jednostavno kreiranje i uređivanje putopisa
+- Centralizovati informacije o destinacijama kroz korisničke iskaze
+- Obezbediti interaktivno okruženje (komentari, ocene, fotografije)
+- Demonstrirati praktičnu primenu modernih web tehnologija (Next.js, Firebase)
+
+---
 
 ## Tehnologije
+
 | Sloj | Tehnologija |
 |------|-------------|
-| Frontend | Next.js 14 (App Router), React, TypeScript, Tailwind CSS |
-| Backend | Next.js API Routes, NextAuth.js |
-| Baza | Firebase Firestore |
-| Auth | Firebase Auth + NextAuth (JWT) |
-| Mape | Leaflet + OpenStreetMap + Nominatim geocoding |
-| Slike | Unsplash API |
-| Grafici | Chart.js |
-| Testovi | Jest, React Testing Library |
+| Framework | Next.js 14 (App Router), React 18, TypeScript |
+| Stilizovanje | Tailwind CSS |
+| Backend | Next.js API Routes, NextAuth.js 4 |
+| Baza podataka | Firebase Firestore |
+| Autentifikacija | Firebase Auth + NextAuth (JWT) |
+| Mape | Leaflet + OpenStreetMap |
+| Slike | Unsplash API, Sharp |
+| Rate limiting | Redis + rate-limiter-flexible |
+| Testiranje | Jest + React Testing Library |
 | CI/CD | GitHub Actions |
-| Deploy | Vercel |
-| Kontejnerizacija | Docker, docker-compose |
+| Deployment | Vercel, Docker |
 
 ---
 
-## Funkcionalnosti
+## Pokretanje aplikacije
 
-- Registracija i prijava (3 uloge: user, editor, admin)
-- CRUD putopisa sa destinacijama
-- Komentarisanje putopisa
-- Ocenjivanje destinacija (1-5 zvezdica)
-- Interaktivna mapa sa custom markerima
-- Automatske slike destinacija (Unsplash)
-- Statistike platforme (bar, doughnut, horizontal bar chart)
-- Swagger API dokumentacija (`/api-docs`)
-- Bezbednost: XSS, CSRF, IDOR, rate limiting, security headers
+### Preduslovi i konfiguracija
 
----
+Kopirati `.env.example` u `.env.local` i popuniti vrednosti (Firebase kredencijali, NextAuth secret, Unsplash API ključ):
 
-## Pokretanje
-
-### Preduslovi
-- Node.js 18+
-- npm
-- Firebase projekat ([console.firebase.google.com](https://console.firebase.google.com))
-- Unsplash API key ([unsplash.com/developers](https://unsplash.com/developers))
-
-### Env varijable
-Kopiraj `.env.example` u `.env.local` i popuni vrednosti:
 ```bash
 cp .env.example .env.local
 ```
 
 ---
 
-### 1. Lokalno (`npm run dev`)
+### 1. Lokalno (npm run dev)
+
+**Preduslovi:** Node.js 20+, npm
+
 ```bash
 git clone https://github.com/elab-development/internet-tehnologije-2025-travelexperiencejournal_2022_0368.git
 cd internet-tehnologije-2025-travelexperiencejournal_2022_0368/travel-journal
 npm install
 npm run dev
 ```
-Otvori: **http://localhost:3000**
+
+Aplikacija je dostupna na **http://localhost:3000**
 
 ---
 
 ### 2. Docker
+
+**Preduslovi:** Docker, Docker Compose
+
+Pre pokretanja, popuniti environment varijable u `docker-compose.yml` (Firebase kredencijali, `NEXTAUTH_SECRET`, `UNSPLASH_ACCESS_KEY`).
+
 ```bash
 cd travel-journal
-cp .env.example .env
 docker-compose up --build
 ```
-Otvori: **http://localhost:3000**
-Zaustavi: `docker-compose down`
+
+Aplikacija je dostupna na **http://localhost:3000**
+
+Za zaustavljanje: `docker-compose down`
+
+Docker Compose pokreće dva servisa:
+- **app** – Next.js aplikacija (port 3000)
+- **redis** – Redis 7 za rate limiting (port 6379)
 
 ---
 
-### 3. Cloud (Vercel)
-Produkciona verzija je deployovana na:
-**https://travel-journal-xxx.vercel.app**
-_(Link će biti ažuriran nakon deploya)_
+### 3. Vercel (cloud)
 
----
+Produkciona verzija je deployovana i dostupna na:
 
-## Testovi
-```bash
-npm test                # svi testovi
-npm run test:backend    # samo API testovi
-npm run test:frontend   # samo UI testovi
-```
+**https://travel-journal-beryl-gamma.vercel.app**
 
----
-
-## API dokumentacija
-Swagger UI je dostupan na `/api-docs` (lokalno: http://localhost:3000/api-docs).
-
----
-
-## Test korisnici (seed)
-| Uloga | Email | Lozinka |
-|-------|-------|---------|
-| Admin | admin@travel.com | admin123 |
-| Editor | editor@travel.com | editor123 |
-| User | user@travel.com | user123 |
-
-Seed: `npm run seed`
-
----
-
-## Struktura projekta
-```
-travel-journal/
-├── app/                  # Next.js stranice i API rute
-│   ├── api/              # REST API (posts, comments, destinations, ratings, stats, auth, profile)
-│   ├── (auth)/           # Login, Register stranice
-│   ├── dashboard/        # Početna stranica
-│   ├── posts/            # Kreiranje, pregled, izmena putopisa
-│   ├── destinations/     # Mapa destinacija
-│   ├── stats/            # Statistike sa grafikonima
-│   └── api-docs/         # Swagger dokumentacija
-├── components/           # React komponente
-│   ├── ui/               # Button, Card, Input, Select, RatingStars
-│   ├── layout/           # Navbar
-│   ├── dashboard/        # PostCard
-│   ├── posts/            # CommentSection, PostActions, DeleteModal, RatingSection
-│   ├── map/              # DestinationMap (Leaflet)
-│   └── charts/           # PostsPerMonth, TopDestinations, Ratings chart
-├── lib/                  # Pomoćne biblioteke
-│   ├── firebase/         # Firebase config i admin SDK
-│   ├── auth/             # NextAuth konfiguracija
-│   ├── types/            # TypeScript tipovi (User, Post, Comment, Destination, Rating)
-│   ├── validation/       # Zod šeme
-│   ├── security/         # XSS, CSRF, IDOR, rate limiting
-│   └── external/         # Unsplash, geocoding
-├── __tests__/            # Jest testovi (API + komponente)
-├── Dockerfile            # Multi-stage Docker build
-├── docker-compose.yml    # App + Redis
-└── SECURITY.md           # Dokumentacija bezbednosnih mera
-```
-
----
-
-## Git workflow
-```
-main ← develop ← feature/*
-```
-Grane: `feature/testing-ci`, `feature/docker-swagger`, `feature/external-apis`, `feature/security`, `feature/visualization`
+Nije potrebna nikakva lokalna konfiguracija za pristup produkcijskoj verziji.
