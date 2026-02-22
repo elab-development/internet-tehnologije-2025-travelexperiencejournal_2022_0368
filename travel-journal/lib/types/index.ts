@@ -13,6 +13,7 @@ export interface User {
   bio?: string;
   profilePhotoURL?: string;
   role: UserRole;
+  isBlocked?: boolean;            // Blokiran od strane admina
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +53,7 @@ export interface Comment {
   postId: string;                 // Post.postId
   authorId: string;               // User.uid
   content: string;
+  isHidden?: boolean;             // Sakriveno od strane editora/admina
   createdAt: Date;
   updatedAt: Date;
 }

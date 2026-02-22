@@ -6,6 +6,9 @@ import { z } from 'zod';
 import { Destination } from '@/lib/types';
 import { getDestinationImage } from '@/lib/external/unsplash';
 import { geocodeDestination } from '@/lib/external/geocoding';
+import { sanitizeObject } from '@/lib/security/sanitize';
+import { checkRateLimit } from '@/lib/security/withRateLimit';
+import { mutationLimiter } from '@/lib/security/rateLimiter';
 
 // GET - Lista destinacija
 export async function GET(request: NextRequest) {
@@ -46,6 +49,10 @@ import { createDestinationSchema } from '@/lib/validation/schemas';
 // POST - Kreiranje nove destinacije
 
 export async function POST(request: NextRequest) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authConfig);
     if (!session?.user) {
@@ -57,12 +64,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createDestinationSchema.parse(body);
+    const sanitizedData = sanitizeObject(validatedData);
 
     // Proveri da li destinacija već postoji
     const existingDestination = await adminDb
       .collection('destinations')
-      .where('name', '==', validatedData.name)
-      .where('country', '==', validatedData.country)
+      .where('name', '==', sanitizedData.name)
+      .where('country', '==', sanitizedData.country)
       .get();
 
     if (!existingDestination.empty) {
@@ -74,22 +82,22 @@ export async function POST(request: NextRequest) {
 
     // Dohvati sliku iz Unsplash-a
     const imageData = await getDestinationImage(
-      validatedData.name,
-      validatedData.country
+      sanitizedData.name,
+      sanitizedData.country
     );
 
     // Dohvati koordinate
     const coords = await geocodeDestination(
-      validatedData.name,
-      validatedData.country
+      sanitizedData.name,
+      sanitizedData.country
     );
 
     const destRef = adminDb.collection('destinations').doc();
     const destData = {
       destinationId: destRef.id,
-      name: validatedData.name,
-      country: validatedData.country,
-      description: validatedData.description,
+      name: sanitizedData.name,
+      country: sanitizedData.country,
+      description: sanitizedData.description,
       createdBy: session.user.id,
       averageRating: 0,
       imageURL: imageData?.imageURL || '',

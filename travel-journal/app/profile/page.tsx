@@ -2,6 +2,8 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { redirect } from 'next/navigation';
 import { adminDb } from '@/lib/firebase/admin';
+
+export const dynamic = 'force-dynamic';
 import { User, Post } from '@/lib/types';
 import ProfileForm from '@/components/profile/ProfileForm';
 import Card from '@/components/ui/Card';

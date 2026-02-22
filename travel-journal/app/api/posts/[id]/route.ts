@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { adminDb } from '@/lib/firebase/admin';
 import { UserRole } from '@/lib/types';
+import { sanitizeObject } from '@/lib/security/sanitize';
+import { checkRateLimit } from '@/lib/security/withRateLimit';
+import { mutationLimiter } from '@/lib/security/rateLimiter';
+import { canAccessResource, logIDORAttempt } from '@/lib/security/idor';
 
 // GET - Detalji jednog putopisa
 export async function GET(
@@ -98,6 +102,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authConfig);
     if (!session?.user) {
@@ -109,6 +117,7 @@ export async function PUT(
 
     const postId = params.id;
     const body = await request.json();
+    const sanitizedBody = sanitizeObject(body);
 
     const postDoc = await adminDb.collection('posts').doc(postId).get();
 
@@ -121,12 +130,15 @@ export async function PUT(
 
     const postData = postDoc.data();
 
-    // Proveri autorizaciju
-    const canEdit =
-      postData?.authorId === session.user.id ||
-      [UserRole.ADMIN, UserRole.EDITOR].includes(session.user.role);
+    // Proveri autorizaciju (IDOR helper)
+    const canEdit = canAccessResource(
+      { id: session.user.id, role: session.user.role },
+      postData?.authorId,
+      { allowEditor: true }
+    );
 
     if (!canEdit) {
+      logIDORAttempt(session.user.id, postId, 'post');
       return NextResponse.json(
         { error: 'Nemate dozvolu za izmenu ovog putopisa' },
         { status: 403 }
@@ -138,10 +150,10 @@ export async function PUT(
       .collection('posts')
       .doc(postId)
       .update({
-        title: body.title,
-        content: body.content,
-        destinationId: body.destinationId,
-        travelDate: new Date(body.travelDate),
+        title: sanitizedBody.title,
+        content: sanitizedBody.content,
+        destinationId: sanitizedBody.destinationId,
+        travelDate: new Date(sanitizedBody.travelDate),
         updatedAt: new Date(),
       });
 
@@ -163,6 +175,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authConfig);
     if (!session?.user) {
@@ -185,11 +201,15 @@ export async function DELETE(
 
     const postData = postDoc.data();
 
-    // Proveri autorizaciju
-    if (
-      postData?.authorId !== session.user.id &&
-      session.user.role !== UserRole.ADMIN
-    ) {
+    // Proveri autorizaciju (IDOR helper — samo autor i admin mogu brisati)
+    const canDelete = canAccessResource(
+      { id: session.user.id, role: session.user.role },
+      postData?.authorId,
+      { allowEditor: false }
+    );
+
+    if (!canDelete) {
+      logIDORAttempt(session.user.id, postId, 'post');
       return NextResponse.json(
         { error: 'Nemate dozvolu za brisanje ovog putopisa' },
         { status: 403 }

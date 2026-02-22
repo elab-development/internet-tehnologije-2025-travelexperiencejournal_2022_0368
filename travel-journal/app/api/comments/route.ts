@@ -4,6 +4,9 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { z } from 'zod';
 import { Comment } from '@/lib/types';
+import { sanitizeObject } from '@/lib/security/sanitize';
+import { checkRateLimit } from '@/lib/security/withRateLimit';
+import { mutationLimiter } from '@/lib/security/rateLimiter';
 
 // GET - Komentari za određeni post
 export async function GET(request: NextRequest) {
@@ -49,6 +52,10 @@ import { createCommentSchema } from '@/lib/validation/schemas';
 // POST - Kreiranje novog komentara
 
 export async function POST(request: NextRequest) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authConfig);
     if (!session?.user) {
@@ -60,11 +67,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createCommentSchema.parse(body);
+    const sanitizedData = sanitizeObject(validatedData);
 
     // Proveri da li post postoji
     const postDoc = await adminDb
       .collection('posts')
-      .doc(validatedData.postId)
+      .doc(sanitizedData.postId)
       .get();
 
     if (!postDoc.exists) {
@@ -77,9 +85,9 @@ export async function POST(request: NextRequest) {
     const commentRef = adminDb.collection('comments').doc();
     const commentData = {
       commentId: commentRef.id,
-      postId: validatedData.postId,
+      postId: sanitizedData.postId,
       authorId: session.user.id,
-      content: validatedData.content,
+      content: sanitizedData.content,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

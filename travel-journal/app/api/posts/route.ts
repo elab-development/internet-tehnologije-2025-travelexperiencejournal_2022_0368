@@ -5,6 +5,9 @@ import { Post } from '@/lib/types';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 import { z } from 'zod';
+import { sanitizeObject } from '@/lib/security/sanitize';
+import { checkRateLimit } from '@/lib/security/withRateLimit';
+import { mutationLimiter } from '@/lib/security/rateLimiter';
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,6 +59,10 @@ export async function GET(request: NextRequest) {
 import { createPostSchema } from '@/lib/validation/schemas';
 
 export async function POST(request: NextRequest) {
+  // Rate limit provera
+  const rateLimitResponse = await checkRateLimit(request, mutationLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // Proveri autentifikaciju
     const session = await getServerSession(authConfig);
@@ -69,11 +76,12 @@ export async function POST(request: NextRequest) {
     // Parse i validiraj body
     const body = await request.json();
     const validatedData = createPostSchema.parse(body);
+    const sanitizedData = sanitizeObject(validatedData);
 
     // Proveri da li destinacija postoji
     const destinationDoc = await adminDb
       .collection('destinations')
-      .doc(validatedData.destinationId)
+      .doc(sanitizedData.destinationId)
       .get();
 
     if (!destinationDoc.exists) {
@@ -87,12 +95,12 @@ export async function POST(request: NextRequest) {
     const postRef = adminDb.collection('posts').doc();
     const postData = {
       postId: postRef.id,
-      title: validatedData.title,
-      content: validatedData.content,
+      title: sanitizedData.title,
+      content: sanitizedData.content,
       authorId: session.user.id,
-      destinationId: validatedData.destinationId,
-      travelDate: new Date(validatedData.travelDate),
-      isPublished: validatedData.isPublished ?? true,
+      destinationId: sanitizedData.destinationId,
+      travelDate: new Date(sanitizedData.travelDate),
+      isPublished: sanitizedData.isPublished ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
